@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chit Fund Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f8f8;
+        }
+        h1 {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5a67d8;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #434190;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #5a67d8;
+            color: white;
+        }
+        .scrollable-table {
+            overflow-x: auto;
+        }
+        .editable {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 5px;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="mainHeading">Chit Fund Management</h1>
+    <div id="loginForm">
+        <input type="password" id="password" placeholder="Enter Password">
+        <button onclick="login()">Login</button>
+    </div>
+    <div id="selectionForm" style="display: none;">
+        <input type="text" id="newManagementName" placeholder="Enter New Management Name">
+        <button onclick="createNewManagement()">Create New Management</button>
+        <div id="existingManagements">
+            <!-- Existing management buttons will be added here -->
+        </div>
+    </div>
+    <div id="mainContent" style="display: none;">
+        <button onclick="goBack()">Back</button>
+        <div>
+            <input type="text" id="memberName" placeholder="Enter Member Name">
+            <button onclick="addMember()">Add Member</button>
+        </div>
+        <h2>Members</h2>
+        <div class="scrollable-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Member ID</th>
+                        <th>Name</th>
+                        <th>Total Paid</th>
+                        <th>Settlement Date</th>
+                        <th>Settled Amount</th>
+                        <th>Chit No</th>
+                        <th>1 Oct</th>
+                        <th>2 Nov</th>
+                        <th>3 Dec</th>
+                        <th>4 Jan</th>
+                        <th>5 Feb</th>
+                        <th>6 Mar</th>
+                        <th>7 Apr</th>
+                        <th>8 May</th>
+                        <th>9 Jun</th>
+                        <th>10 Jul</th>
+                        <th>11 Aug</th>
+                        <th>12 Sep</th>
+                        <th>13 Oct</th>
+                        <th>14 Nov</th>
+                        <th>15 Dec</th>
+                        <th>16 Jan</th>
+                        <th>17 Feb</th>
+                        <th>18 Mar</th>
+                        <th>19 Apr</th>
+                        <th>20 May</th>
+                    </tr>
+                </thead>
+                <tbody id="membersBody">
+                    <!-- Add member rows here -->
+                </tbody>
+            </table>
+        </div>
+        <h2>Settle Month Payment</h2>
+        <div>
+            <input type="text" id="settleMemberId" placeholder="Enter Member ID">
+            <input type="text" id="settlementAmount" placeholder="Enter Settlement Amount">
+            <input type="text" id="chitNo" placeholder="Enter Chit No">
+            <button onclick="settleMonthPayment()">Settle Payment</button>
+        </div>
+        <h2>Settlements</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Member ID</th>
+                    <th>Name</th>
+                    <th>Settlement Date</th>
+                    <th>Settled Amount</th>
+                    <th>Chit NO</th>
+                </tr>
+            </thead>
+            <tbody id="settlementsBody">
+                <!-- Add settlement rows here -->
+            </tbody>
+        </table>
+        <button onclick="resetData()">Reset Data</button>
+    </div>
+
+    <footer style="margin-top: 20px; font-size: 0.9em; color: #666;">
+        &copy; Hemanth Kumar Pasupuleti
+    </footer>
+
+    <script>
+        const correctPassword = "123"; // Set your password here
+        let selectedManagement = '';
+
+        function login() {
+            const password = document.getElementById("password").value;
+            if (password === correctPassword) {
+                document.getElementById("loginForm").style.display = "none";
+                document.getElementById("selectionForm").style.display = "block";
+                loadExistingManagements();
+            } else {
+                alert("Incorrect password. Please try again.");
+            }
+        }
+
+        function loadExistingManagements() {
+            const existingManagements = JSON.parse(localStorage.getItem('managements')) || [];
+            const existingManagementsDiv = document.getElementById("existingManagements");
+            existingManagementsDiv.innerHTML = '';
+            existingManagements.forEach(management => {
+                const button = document.createElement("button");
+                button.innerText = management;
+                button.onclick = () => selectManagement(management);
+                existingManagementsDiv.appendChild(button);
+            });
+        }
+
+        function createNewManagement() {
+            const newManagementName = document.getElementById("newManagementName").value;
+            if (newManagementName) {
+                const existingManagements = JSON.parse(localStorage.getItem('managements')) || [];
+                if (!existingManagements.includes(newManagementName)) {
+                    existingManagements.push(newManagementName);
+                    localStorage.setItem('managements', JSON.stringify(existingManagements));
+                    loadExistingManagements();
+                } else {
+                    alert("Management name already exists.");
+                }
+                document.getElementById("newManagementName").value = '';
+            } else {
+                alert("Please enter a management name.");
+            }
+        }
+
+        function selectManagement(management) {
+            selectedManagement = management;
+            document.getElementById("selectionForm").style.display = "none";
+            document.getElementById("mainContent").style.display = "block";
+            document.getElementById("mainHeading").innerText = `Chit Fund Management ${management}`;
+            loadFromLocalStorage();
+        }
+
+        function goBack() {
+            document.getElementById("mainContent").style.display = "none";
+            document.getElementById("selectionForm").style.display = "block";
+        }
+
+        let members = [];
+        let settlements = [];
+
+        // Load members and settlements from localStorage
+        function loadFromLocalStorage() {
+            const storedMembers = localStorage.getItem(`members_${selectedManagement}`);
+            const storedSettlements = localStorage.getItem(`settlements_${selectedManagement}`);
+            if (storedMembers) members = JSON.parse(storedMembers);
+            if (storedSettlements) settlements = JSON.parse(storedSettlements);
+            renderMembers();
+            renderSettlements();
+        }
+
+        // Save members and settlements to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem(`members_${selectedManagement}`, JSON.stringify(members));
+            localStorage.setItem(`settlements_${selectedManagement}`, JSON.stringify(settlements));
+        }
+
+        function addMember() {
+            const memberName = document.getElementById("memberName").value;
+            const memberId = members.length + 1;
+            if (memberName) {
+                members.push({ id: memberId, name: memberName, payments: Array(20).fill(0) });
+                saveToLocalStorage();
+                renderMembers();
+                document.getElementById("memberName").value = '';
+            } else {
+                alert("Please enter a member name.");
+            }
+        }
+
+        function renderMembers() {
+            const membersBody = document.getElementById("membersBody");
+            membersBody.innerHTML = '';
+            members.forEach(member => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${member.id}</td>
+                    <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'name', this.innerText)">${member.name}</td>
+                    <td>${member.payments.reduce((a, b) => a + b, 0)}</td>
+                    <td>${member.settlementDate || ''}</td>
+                    <td>${member.settledAmount || ''}</td>
+                    <td>${member.chitNo || ''}</td>
+                    ${member.payments.map((payment, index) =>
+                        `<td class="editable" contenteditable="true" onblur="updateMemberPayment(${member.id}, ${index}, this.innerText)">${payment}</td>`
+                    ).join('')}
+                `;
+                membersBody.appendChild(row);
+            });
+        }
+
+        function updateMember(id, field, value) {
+            const member = members.find(member => member.id === id);
+            if (member) {
+                member[field] = value;
+                saveToLocalStorage();
+            }
+        }
+
+        function updateMemberPayment(id, monthIndex, value) {
+            const member = members.find(member => member.id === id);
+            if (member) {
+                member.payments[monthIndex] = parseFloat(value) || 0;
+                saveToLocalStorage();
+                renderMembers();
+            }
+        }
+
+        function settleMonthPayment() {
+            const memberId = parseInt(document.getElementById("settleMemberId").value);
+            const settlementAmount = parseFloat(document.getElementById("settlementAmount").value);
+            const chitNo = document.getElementById("chitNo").value;
+            const member = members.find(member => member.id === memberId);
+
+            if (member && settlementAmount && chitNo) {
+                const settlement = {
+                    id: memberId,
+                    name: member.name,
+                    settlementDate: new Date().toLocaleDateString(),
+                    settledAmount: settlementAmount,
+                    chitNo: chitNo
+                };
+                settlements.push(settlement);
+                member.settlementDate = settlement.settlementDate;
+                member.settledAmount = settlementAmount;
+                member.chitNo = chitNo;
+                saveToLocalStorage();
+                renderMembers();
+                renderSettlements();
+                document.getElementById("settleMemberId").value = '';
+                document.getElementById("settlementAmount").value = '';
+                document.getElementById("chitNo").value = '';
+            } else {
+                alert("Please enter valid details.");
+            }
+        }
+
+        function renderSettlements() {
+            const settlementsBody = document.getElementById("settlementsBody");
+            settlementsBody.innerHTML = '';
+            settlements.forEach(settlement => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${settlement.id}</td>
+                    <td>${settlement.name}</td>
+                    <td>${settlement.settlementDate}</td>
+                    <td>${settlement.settledAmount}</td>
+                    <td>${settlement.chitNo}</td>
+                `;
+                settlementsBody.appendChild(row);
+            });
+        }
+
+        function resetData() {
+            if (confirm("Are you sure you want to reset all data?")) {
+                members = [];
+                settlements = [];
+                saveToLocalStorage();
+                renderMembers();
+                renderSettlements();
+            }
+        }
+    </script>
+</body>
+</html>
