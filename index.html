@@ -290,7 +290,8 @@
             members.forEach(member => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${member.id}</td>
+                    <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'id', this.innerText)">${member.id}</td>
+
                     <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'name', this.innerText)">${member.name}</td>
                     <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'phone', this.innerText)">${member.phone || ''}</td>
                     <td>${member.payments.reduce((a, b) => a + b, 0)}</td>
@@ -374,7 +375,7 @@
                 const documentLink = settlement.uploadDocument ? `<a href="${settlement.uploadDocument}" target="_blank">View Document</a>` : 'No Document';
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${settlement.memberId}</td>
+                     <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'memberId', this.innerText)">${settlement.memberId || ''}</td>
             <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'name', this.innerText)">${settlement.name || ''}</td>
             <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'phone', this.innerText)">${settlement.phone || ''}</td>
            
