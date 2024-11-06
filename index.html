@@ -15,7 +15,7 @@
             margin-top: 20px;
             color: teal;
         }
-        input[type="text"], input[type="password"], input[type="date"] {
+        input[type="text"], input[type="password"], input[type="date"], input[type="file"] {
             padding: 10px;
             margin: 10px;
             border: 1px solid #ccc;
@@ -113,8 +113,10 @@
         <button class="delete-button" onclick="deleteManagement()">Delete Management</button>
         <div>
             <input type="text" id="memberName" placeholder="Enter Member Name">
+            <input type="text" id="phoneNumber" placeholder="Enter Phone Number">
             <button class="add-button" onclick="addMember()">Add Member</button>
         </div>
+        
         <div>
             <input type="date" id="startDate" placeholder="Start Date">
             <input type="date" id="endDate" placeholder="End Date">
@@ -136,6 +138,7 @@
             <input type="text" id="settleMemberId" placeholder="Enter Member ID">
             <input type="text" id="settlementAmount" placeholder="Enter Settlement Amount">
             <input type="text" id="chitNo" placeholder="Enter Chit No">
+            <input type="file" id="uploadDocument" placeholder="Upload Document" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
             <button class="settle-button" onclick="settleMonthPayment()">Settle Payment</button>
         </div>
         <h2>Settlements</h2>
@@ -144,15 +147,18 @@
                 <tr>
                     <th>Member ID</th>
                     <th>Name</th>
+                    <th>Phone Number</th>
                     <th>Settlement Date</th>
                     <th>Settled Amount</th>
                     <th>Lifted Chit No</th>
+                    <th>Upload Document</th>
                 </tr>
             </thead>
             <tbody id="settlementsBody">
-                <!-- Add settlement rows here -->
+                <!-- Settlement rows with document upload will go here -->
             </tbody>
         </table>
+
         <button class="reset-button" onclick="resetData()">Reset Data</button>
     </div>
 
@@ -262,17 +268,19 @@
 
         function addMember() {
             const memberName = document.getElementById("memberName").value;
+            const phoneNumber = document.getElementById("phoneNumber").value;
             const memberId = members.length + 1;
             const startDate = new Date(document.getElementById("startDate").value);
             const endDate = new Date(document.getElementById("endDate").value);
             const months = getMonthsBetweenDates(startDate, endDate);
-            if (memberName) {
-                members.push({ id: memberId, name: memberName, payments: Array(months.length).fill(0) });
+            if (memberName && phoneNumber) {
+                members.push({ id: memberId, name: memberName, phone: phoneNumber, payments: Array(months.length).fill(0) });
                 saveToLocalStorage();
                 renderMembers();
                 document.getElementById("memberName").value = '';
+                document.getElementById("phoneNumber").value = '';
             } else {
-                alert("Please enter a member name.");
+                alert("Please enter both a member name and phone number.");
             }
         }
 
@@ -284,6 +292,7 @@
                 row.innerHTML = `
                     <td>${member.id}</td>
                     <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'name', this.innerText)">${member.name}</td>
+                    <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'phone', this.innerText)">${member.phone || ''}</td>
                     <td>${member.payments.reduce((a, b) => a + b, 0)}</td>
                     <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'settlementDate', this.innerText)">${member.settlementDate || ''}</td>
                     <td class="editable" contenteditable="true" onblur="updateMember(${member.id}, 'settlementAmount', this.innerText)">${member.settlementAmount || ''}</td>
@@ -317,9 +326,11 @@
             const settlementAmount = parseFloat(document.getElementById("settlementAmount").value);
             const chitNo = document.getElementById("chitNo").value;
             const settlementDate = new Date().toLocaleDateString();
+            const uploadDocument = document.getElementById("uploadDocument").files[0];
 
             if (memberId && settlementAmount && chitNo) {
                 const member = members.find(m => m.id === memberId);
+                
                 if (member) {
                     const existingSettlement = settlements.find(s => s.memberId === memberId && s.chitNo === chitNo);
                     if (existingSettlement) {
@@ -330,10 +341,24 @@
                     member.settlementDate = settlementDate;
                     member.chitNo = chitNo;
 
-                    settlements.push({ memberId, name: member.name, settlementDate, settlementAmount, chitNo });
-                    saveToLocalStorage();
-                    renderMembers();
-                    renderSettlements();
+                    if (uploadDocument) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            const fileData = event.target.result;
+                            localStorage.setItem(`document_${memberId}`, fileData); // Store file as base64
+                            member.uploadDocument = fileData;
+                            settlements.push({ memberId, name: member.name, phone: member.phone, settlementDate, settlementAmount, chitNo, uploadDocument: fileData });
+                            saveToLocalStorage();
+                            renderMembers();
+                            renderSettlements();
+                        };
+                        reader.readAsDataURL(uploadDocument);
+                    } else {
+                        settlements.push({ memberId, name: member.name, phone: member.phone, settlementDate, settlementAmount, chitNo, uploadDocument: null });
+                        saveToLocalStorage();
+                        renderMembers();
+                        renderSettlements();
+                    }
                 } else {
                     alert("Member not found.");
                 }
@@ -346,13 +371,18 @@
             const settlementsBody = document.getElementById("settlementsBody");
             settlementsBody.innerHTML = '';
             settlements.forEach(settlement => {
+                const documentLink = settlement.uploadDocument ? `<a href="${settlement.uploadDocument}" target="_blank">View Document</a>` : 'No Document';
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td class="editable" contenteditable="true" onblur="updateSettlement(${settlement.memberId}, 'memberId', this.innerText)">${settlement.memberId}</td>
-                    <td class="editable" contenteditable="true" onblur="updateSettlement(${settlement.memberId}, 'name', this.innerText)">${settlement.name}</td>
-                    <td class="editable" contenteditable="true" onblur="updateSettlement(${settlement.memberId}, 'settlementDate', this.innerText)">${settlement.settlementDate}</td>
-                    <td class="editable" contenteditable="true" onblur="updateSettlement(${settlement.memberId}, 'settlementAmount', this.innerText)">${settlement.settlementAmount}</td>
-                    <td class="editable" contenteditable="true" onblur="updateSettlement(${settlement.memberId}, 'chitNo', this.innerText)">${settlement.chitNo}</td>
+                    <td>${settlement.memberId}</td>
+                    <td>${settlement.name}</td>
+                    <td>${settlement.phone}</td>
+                    <td>${settlement.settlementDate}</td>
+                    <td>${settlement.settlementAmount}</td>
+                    <td>${settlement.chitNo}</td>
+                    <td>
+                        ${documentLink}
+                    </td>
                 `;
                 settlementsBody.appendChild(row);
             });
@@ -386,10 +416,12 @@
                     <tr>
                         <th>Member ID</th>
                         <th>Name</th>
+                        <th>Phone Number</th>
                         <th>Total Paid</th>
                         <th>Settlement Date</th>
                         <th>Settled Amount</th>
                         <th>Lifted Chit No</th>
+                        
                     </tr>
                 `;
                 let currentDate = new Date(startDate);
