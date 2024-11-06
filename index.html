@@ -375,11 +375,13 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${settlement.memberId}</td>
-                    <td>${settlement.name}</td>
-                    <td>${settlement.phone}</td>
-                    <td>${settlement.settlementDate}</td>
-                    <td>${settlement.settlementAmount}</td>
-                    <td>${settlement.chitNo}</td>
+            <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'name', this.innerText)">${settlement.name || ''}</td>
+            <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'phone', this.innerText)">${settlement.phone || ''}</td>
+           
+                   <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'settlementDate', this.innerText)">${settlement.settlementDate || ''}</td>
+            <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'settlementAmount', this.innerText)">${settlement.settlementAmount || ''}</td>
+            <td class="editable" contenteditable="true" onblur="updateMember(${settlement.memberId}, 'chitNo', this.innerText)">${settlement.chitNo || ''}</td>
+            
                     <td>
                         ${documentLink}
                     </td>
